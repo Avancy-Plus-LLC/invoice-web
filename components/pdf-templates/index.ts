@@ -1,0 +1,12 @@
+export { ClassicTemplate } from './ClassicTemplate';
+export { ModernTemplate } from './ModernTemplate';
+export { MinimalTemplate } from './MinimalTemplate';
+export { ElegantTemplate } from './ElegantTemplate';
+export { WagyuTemplate } from './WagyuTemplate';
+export { OceanTemplate } from './OceanTemplate';
+export { NightTemplate } from './NightTemplate';
+export { SakuraTemplate } from './SakuraTemplate';
+export { AutumnTemplate } from './AutumnTemplate';
+export { SlateTemplate } from './SlateTemplate';
+export { VioletTemplate } from './VioletTemplate';
+export { RetroTemplate } from './RetroTemplate';
