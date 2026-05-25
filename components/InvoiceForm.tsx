@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useFieldArray, type UseFormReturn } from 'react-hook-form';
-import type { InvoiceData, BankAccount } from '@/lib/types';
+import type { InvoiceData, SavedIssuer } from '@/lib/types';
 
 type SavedClient = {
   clientName: string;
@@ -17,15 +17,16 @@ type SavedClient = {
 type Props = {
   form: UseFormReturn<InvoiceData>;
   isLoggedIn?: boolean;
+  savedIssuers?: SavedIssuer[];
+  onSelectIssuer?: (issuer: SavedIssuer) => void;
+  onSaveIssuerNew?: () => void;
+  savingIssuerNew?: boolean;
   savedClients?: SavedClient[];
   onSelectClient?: (client: SavedClient) => void;
   onSaveClient?: () => void;
   savingClient?: boolean;
   onSaveIssuer?: () => void;
   savingIssuer?: boolean;
-  savedBankAccounts?: BankAccount[];
-  onSelectBankAccount?: (account: BankAccount) => void;
-  onSaveBankAccount?: (label: string) => Promise<void>;
   notesTemplate?: string;
   onApplyNotesTemplate?: () => void;
   onSaveNotesTemplate?: () => void;
@@ -113,15 +114,16 @@ function PostalInput({
 export function InvoiceForm({
   form,
   isLoggedIn,
+  savedIssuers = [],
+  onSelectIssuer,
+  onSaveIssuerNew,
+  savingIssuerNew,
   savedClients = [],
   onSelectClient,
   onSaveClient,
   savingClient,
   onSaveIssuer,
   savingIssuer,
-  savedBankAccounts = [],
-  onSelectBankAccount,
-  onSaveBankAccount,
   notesTemplate,
   onApplyNotesTemplate,
   onSaveNotesTemplate,
@@ -129,23 +131,7 @@ export function InvoiceForm({
 }: Props) {
   const { register, control, formState: { errors }, watch } = form;
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
-  const [showSaveBank, setShowSaveBank] = useState(false);
-  const [bankLabel, setBankLabel] = useState('');
-  const [savingBank, setSavingBank] = useState(false);
-
   const items = watch('items');
-
-  async function handleSaveBank() {
-    if (!bankLabel.trim() || !onSaveBankAccount) return;
-    setSavingBank(true);
-    try {
-      await onSaveBankAccount(bankLabel.trim());
-      setBankLabel('');
-      setShowSaveBank(false);
-    } finally {
-      setSavingBank(false);
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -232,16 +218,45 @@ export function InvoiceForm({
         <div className="flex items-center justify-between border-b pb-1 mb-3">
           <h3 className="text-sm font-bold text-gray-800">発行者情報</h3>
           {isLoggedIn && (
-            <button
-              type="button"
-              onClick={onSaveIssuer}
-              disabled={savingIssuer}
-              className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
-            >
-              {savingIssuer ? '保存中...' : '保存'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onSaveIssuerNew}
+                disabled={savingIssuerNew}
+                className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+              >
+                {savingIssuerNew ? '保存中...' : '+ この発行者を保存'}
+              </button>
+              <button
+                type="button"
+                onClick={onSaveIssuer}
+                disabled={savingIssuer}
+                className="text-xs text-gray-500 hover:text-gray-700 disabled:opacity-50"
+              >
+                {savingIssuer ? '保存中...' : '保存'}
+              </button>
+            </div>
           )}
         </div>
+        {isLoggedIn && savedIssuers.length > 0 && (
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-gray-600 mb-1">保存済み発行者から選択</label>
+            <select
+              className={inputCls}
+              onChange={(e) => {
+                const idx = Number(e.target.value);
+                if (!isNaN(idx) && savedIssuers[idx]) onSelectIssuer?.(savedIssuers[idx]);
+                e.target.value = '';
+              }}
+              defaultValue=""
+            >
+              <option value="" disabled>選択してください</option>
+              {savedIssuers.map((s, i) => (
+                <option key={i} value={i}>{s.issuerName}</option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <Field label="会社名 *" error={errors.issuerName?.message}>
             <input {...register('issuerName', { required: '必須です' })} className={inputCls} placeholder="自社名" />
@@ -330,26 +345,6 @@ export function InvoiceForm({
       <section>
         <h3 className="text-sm font-bold text-gray-800 border-b pb-1 mb-3">振込先</h3>
 
-        {isLoggedIn && savedBankAccounts.length > 0 && (
-          <div className="mb-3">
-            <label className="block text-xs font-medium text-gray-600 mb-1">保存済み振込先から選択</label>
-            <select
-              className={inputCls}
-              onChange={(e) => {
-                const idx = Number(e.target.value);
-                if (!isNaN(idx) && savedBankAccounts[idx]) onSelectBankAccount?.(savedBankAccounts[idx]);
-                e.target.value = '';
-              }}
-              defaultValue=""
-            >
-              <option value="" disabled>選択してください</option>
-              {savedBankAccounts.map((a, i) => (
-                <option key={i} value={i}>{a.label}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
         <div className="grid grid-cols-3 gap-3">
           <Field label="銀行名">
             <input {...register('bankName')} className={inputCls} placeholder="○○銀行" />
@@ -371,45 +366,6 @@ export function InvoiceForm({
           </Field>
         </div>
 
-        {isLoggedIn && (
-          <div className="mt-2">
-            {!showSaveBank ? (
-              <button
-                type="button"
-                onClick={() => setShowSaveBank(true)}
-                className="text-xs text-blue-600 hover:text-blue-800"
-              >
-                + この振込先を保存
-              </button>
-            ) : (
-              <div className="flex gap-2 items-center mt-1">
-                <input
-                  type="text"
-                  value={bankLabel}
-                  onChange={(e) => setBankLabel(e.target.value)}
-                  placeholder="振込先の名前（例：○○銀行 メイン）"
-                  className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  onKeyDown={(e) => e.key === 'Enter' && handleSaveBank()}
-                />
-                <button
-                  type="button"
-                  onClick={handleSaveBank}
-                  disabled={!bankLabel.trim() || savingBank}
-                  className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-3 py-1 rounded"
-                >
-                  {savingBank ? '保存中...' : '保存'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowSaveBank(false); setBankLabel(''); }}
-                  className="text-xs text-gray-500 hover:text-gray-700"
-                >
-                  キャンセル
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </section>
 
       {/* 備考 */}

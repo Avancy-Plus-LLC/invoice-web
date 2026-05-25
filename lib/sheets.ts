@@ -1,4 +1,4 @@
-import type { BankAccount } from './types';
+import type { SavedIssuer } from './types';
 
 const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
 const DRIVE_BASE = 'https://www.googleapis.com/drive/v3';
@@ -53,11 +53,11 @@ async function ensureSheets(accessToken: string, spreadsheetId: string) {
 
   const updates: Array<{ range: string; values: string[][] }> = [];
   if (missing.includes('備考マスタ')) {
-    updates.push({ range: '備考マスタ!A1:B1', values: [['docType', 'notes']] });
+    updates.push({ range: '備考マスタ!A1:B1', values: [['書類種別', '備考']] });
     updates.push({ range: '備考マスタ!A2:B4', values: DEFAULT_NOTES_ROWS });
   }
   if (missing.includes('振込先リスト')) {
-    updates.push({ range: '振込先リスト!A1:F1', values: [['label', 'bankName', 'bankBranch', 'accountType', 'accountNumber', 'accountHolder']] });
+    updates.push({ range: '振込先リスト!A1:F1', values: [['ラベル', '銀行名', '支店名', '口座種別', '口座番号', '口座名義']] });
   }
   if (updates.length > 0) await batchUpdateValues(accessToken, spreadsheetId, updates);
 }
@@ -85,14 +85,59 @@ export async function getOrCreateSpreadsheet(accessToken: string): Promise<strin
   const id = created.spreadsheetId as string;
 
   await batchUpdateValues(accessToken, id, [
-    { range: '発行者情報!A1:L1', values: [['issuerName','issuerPostal','issuerAddress','issuerTel','issuerEmail','issuerInvoiceNumber','bankName','bankBranch','accountType','accountNumber','accountHolder','webhookUrl']] },
-    { range: '取引先リスト!A1:G1', values: [['clientName','clientPostal','clientAddress','clientDept','clientContact','clientTel','clientEmail']] },
-    { range: '備考マスタ!A1:B1', values: [['docType', 'notes']] },
+    { range: '発行者情報!A1:L1', values: [['発行者名','郵便番号','住所','電話番号','メールアドレス','インボイス登録番号','銀行名','支店名','口座種別','口座番号','口座名義','WebhookURL']] },
+    { range: '取引先リスト!A1:G1', values: [['取引先名','郵便番号','住所','部署','担当者名','電話番号','メールアドレス']] },
+    { range: '備考マスタ!A1:B1', values: [['書類種別', '備考']] },
     { range: '備考マスタ!A2:B4', values: DEFAULT_NOTES_ROWS },
-    { range: '振込先リスト!A1:F1', values: [['label','bankName','bankBranch','accountType','accountNumber','accountHolder']] },
+    { range: '振込先リスト!A1:F1', values: [['ラベル','銀行名','支店名','口座種別','口座番号','口座名義']] },
   ]);
 
   return id;
+}
+
+export async function readIssuers(accessToken: string, spreadsheetId: string): Promise<SavedIssuer[]> {
+  const data = await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/発行者情報!A2:K`, accessToken);
+  return ((data.values ?? []) as string[][])
+    .filter((row) => row[0])
+    .map((row) => ({
+      issuerName: row[0] ?? '',
+      issuerPostal: row[1] ?? '',
+      issuerAddress: row[2] ?? '',
+      issuerTel: row[3] ?? '',
+      issuerEmail: row[4] ?? '',
+      issuerInvoiceNumber: row[5] ?? '',
+      bankName: row[6] ?? '',
+      bankBranch: row[7] ?? '',
+      accountType: row[8] ?? '普通',
+      accountNumber: row[9] ?? '',
+      accountHolder: row[10] ?? '',
+    }));
+}
+
+export async function appendIssuer(accessToken: string, spreadsheetId: string, issuer: SavedIssuer) {
+  await gFetch(
+    `${SHEETS_BASE}/${spreadsheetId}/values/発行者情報!A:L:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    accessToken,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        values: [[
+          issuer.issuerName,
+          issuer.issuerPostal,
+          issuer.issuerAddress,
+          issuer.issuerTel,
+          issuer.issuerEmail,
+          issuer.issuerInvoiceNumber,
+          issuer.bankName,
+          issuer.bankBranch,
+          issuer.accountType,
+          issuer.accountNumber,
+          issuer.accountHolder,
+          '',
+        ]],
+      }),
+    }
+  );
 }
 
 export async function readIssuerInfo(accessToken: string, spreadsheetId: string) {
@@ -205,35 +250,3 @@ export async function writeNotesTemplate(accessToken: string, spreadsheetId: str
   }
 }
 
-export async function readBankAccounts(accessToken: string, spreadsheetId: string): Promise<BankAccount[]> {
-  const data = await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/振込先リスト!A2:F`, accessToken);
-  return ((data.values ?? []) as string[][])
-    .filter((row) => row[0])
-    .map((row) => ({
-      label: row[0] ?? '',
-      bankName: row[1] ?? '',
-      bankBranch: row[2] ?? '',
-      accountType: row[3] ?? '普通',
-      accountNumber: row[4] ?? '',
-      accountHolder: row[5] ?? '',
-    }));
-}
-
-export async function writeBankAccounts(accessToken: string, spreadsheetId: string, accounts: BankAccount[]) {
-  await gFetch(
-    `${SHEETS_BASE}/${spreadsheetId}/values/振込先リスト!A2:F:clear`,
-    accessToken,
-    { method: 'POST', body: JSON.stringify({}) }
-  );
-  if (accounts.length === 0) return;
-  await gFetch(
-    `${SHEETS_BASE}/${spreadsheetId}/values/振込先リスト!A2:F?valueInputOption=RAW`,
-    accessToken,
-    {
-      method: 'PUT',
-      body: JSON.stringify({
-        values: accounts.map((a) => [a.label, a.bankName, a.bankBranch, a.accountType, a.accountNumber, a.accountHolder]),
-      }),
-    }
-  );
-}

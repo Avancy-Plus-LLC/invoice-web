@@ -7,7 +7,7 @@ import { InvoiceForm } from '@/components/InvoiceForm';
 import { TemplateSelector } from '@/components/TemplateSelector';
 import { InvoiceSummary } from '@/components/InvoiceSummary';
 import { PDFActions } from '@/components/PDFActions';
-import type { InvoiceData, TemplateId, DocType, BankAccount } from '@/lib/types';
+import type { InvoiceData, TemplateId, DocType, SavedIssuer } from '@/lib/types';
 import { computeTotals } from '@/lib/calculations';
 
 const today = new Date().toISOString().slice(0, 10);
@@ -82,13 +82,14 @@ export default function Home() {
   }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [savedIssuers, setSavedIssuers] = useState<SavedIssuer[]>([]);
   const [savedClients, setSavedClients] = useState<SavedClient[]>([]);
-  const [savedBankAccounts, setSavedBankAccounts] = useState<BankAccount[]>([]);
   const [notesTemplates, setNotesTemplates] = useState<Record<string, string>>(DEFAULT_NOTES);
   const [webhookUrl, setWebhookUrl] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('');
   const [sheetMsg, setSheetMsg] = useState('');
   const [savingIssuer, setSavingIssuer] = useState(false);
+  const [savingIssuerNew, setSavingIssuerNew] = useState(false);
   const [savingClient, setSavingClient] = useState(false);
   const [savingNotesTemplate, setSavingNotesTemplate] = useState(false);
 
@@ -106,29 +107,11 @@ export default function Home() {
         fields.forEach((f) => form.setValue(f, json.issuer[f] ?? ''));
         if (json.issuer.webhookUrl) setWebhookUrl(json.issuer.webhookUrl);
       }
+      setSavedIssuers(json.issuers ?? []);
       setSavedClients(json.clients ?? []);
       if (json.notesTemplates && Object.keys(json.notesTemplates).length > 0) {
         setNotesTemplates((prev) => ({ ...prev, ...json.notesTemplates }));
       }
-      let bankAccounts: BankAccount[] = json.bankAccounts ?? [];
-      // 振込先リストが空で発行者情報に銀行データがある場合は自動移行
-      if (bankAccounts.length === 0 && json.issuer?.bankName) {
-        const migrated: BankAccount = {
-          label: json.issuer.bankName + (json.issuer.bankBranch ? ` ${json.issuer.bankBranch}` : ''),
-          bankName: json.issuer.bankName,
-          bankBranch: json.issuer.bankBranch ?? '',
-          accountType: json.issuer.accountType ?? '普通',
-          accountNumber: json.issuer.accountNumber ?? '',
-          accountHolder: json.issuer.accountHolder ?? '',
-        };
-        bankAccounts = [migrated];
-        fetch('/api/sheets', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'saveBankAccounts', data: { accounts: bankAccounts } }),
-        }).catch(() => {});
-      }
-      setSavedBankAccounts(bankAccounts);
       setSheetMsg('');
     } catch {
       setSheetMsg('読み込みエラー');
@@ -174,6 +157,55 @@ export default function Home() {
     }
   };
 
+  const selectIssuer = (issuer: SavedIssuer) => {
+    form.setValue('issuerName', issuer.issuerName);
+    form.setValue('issuerPostal', issuer.issuerPostal);
+    form.setValue('issuerAddress', issuer.issuerAddress);
+    form.setValue('issuerTel', issuer.issuerTel);
+    form.setValue('issuerEmail', issuer.issuerEmail);
+    form.setValue('issuerInvoiceNumber', issuer.issuerInvoiceNumber);
+    if (issuer.bankName) {
+      form.setValue('bankName', issuer.bankName);
+      form.setValue('bankBranch', issuer.bankBranch);
+      form.setValue('accountType', issuer.accountType);
+      form.setValue('accountNumber', issuer.accountNumber);
+      form.setValue('accountHolder', issuer.accountHolder);
+    }
+  };
+
+  const saveIssuerNew = async () => {
+    setSavingIssuerNew(true);
+    setSheetMsg('');
+    try {
+      const vals = form.getValues();
+      const issuerData: SavedIssuer = {
+        issuerName: vals.issuerName,
+        issuerPostal: vals.issuerPostal,
+        issuerAddress: vals.issuerAddress,
+        issuerTel: vals.issuerTel,
+        issuerEmail: vals.issuerEmail,
+        issuerInvoiceNumber: vals.issuerInvoiceNumber,
+        bankName: vals.bankName,
+        bankBranch: vals.bankBranch,
+        accountType: vals.accountType,
+        accountNumber: vals.accountNumber,
+        accountHolder: vals.accountHolder,
+      };
+      const res = await fetch('/api/sheets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'saveIssuerNew', data: issuerData }),
+      });
+      if (!res.ok) throw new Error();
+      setSavedIssuers((prev) => [...prev, issuerData]);
+      setSheetMsg('発行者を保存しました');
+    } catch {
+      setSheetMsg('保存エラー');
+    } finally {
+      setSavingIssuerNew(false);
+    }
+  };
+
   const saveClient = async () => {
     setSavingClient(true);
     setSheetMsg('');
@@ -201,33 +233,6 @@ export default function Home() {
     } finally {
       setSavingClient(false);
     }
-  };
-
-  const selectBankAccount = (account: BankAccount) => {
-    form.setValue('bankName', account.bankName);
-    form.setValue('bankBranch', account.bankBranch);
-    form.setValue('accountType', account.accountType);
-    form.setValue('accountNumber', account.accountNumber);
-    form.setValue('accountHolder', account.accountHolder);
-  };
-
-  const saveBankAccount = async (label: string) => {
-    const vals = form.getValues();
-    const account: BankAccount = {
-      label,
-      bankName: vals.bankName,
-      bankBranch: vals.bankBranch,
-      accountType: vals.accountType,
-      accountNumber: vals.accountNumber,
-      accountHolder: vals.accountHolder,
-    };
-    const next = [...savedBankAccounts, account];
-    setSavedBankAccounts(next);
-    await fetch('/api/sheets', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'saveBankAccounts', data: { accounts: next } }),
-    });
   };
 
   const applyNotesTemplate = () => {
@@ -368,15 +373,17 @@ export default function Home() {
               <InvoiceForm
                 form={form}
                 isLoggedIn={isLoggedIn}
+                savedIssuers={savedIssuers}
+                onSelectIssuer={selectIssuer}
+                onSaveIssuerNew={saveIssuerNew}
+                savingIssuerNew={savingIssuerNew}
                 savedClients={savedClients}
                 onSelectClient={selectClient}
                 onSaveClient={saveClient}
                 savingClient={savingClient}
                 onSaveIssuer={saveIssuer}
                 savingIssuer={savingIssuer}
-                savedBankAccounts={savedBankAccounts}
-                onSelectBankAccount={selectBankAccount}
-                onSaveBankAccount={saveBankAccount}
+
                 notesTemplate={notesTemplates[docType]}
                 onApplyNotesTemplate={applyNotesTemplate}
                 onSaveNotesTemplate={saveNotesTemplate}

@@ -35,14 +35,20 @@ export type InvoiceData = {
   accountHolder: string;
 };
 
-export type BankAccount = {
-  label: string;
+export type SavedIssuer = {
+  issuerName: string;
+  issuerPostal: string;
+  issuerAddress: string;
+  issuerTel: string;
+  issuerEmail: string;
+  issuerInvoiceNumber: string;
   bankName: string;
   bankBranch: string;
   accountType: string;
   accountNumber: string;
   accountHolder: string;
 };
+
 
 export type ComputedTotals = {
   subtotal: number;

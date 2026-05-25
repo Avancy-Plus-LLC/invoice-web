@@ -5,12 +5,12 @@ import {
   getOrCreateSpreadsheet,
   readIssuerInfo,
   writeIssuerInfo,
+  readIssuers,
+  appendIssuer,
   readClients,
   appendClient,
   readNotesTemplates,
   writeNotesTemplate,
-  readBankAccounts,
-  writeBankAccounts,
 } from '@/lib/sheets';
 
 async function getAccessToken(): Promise<string | null> {
@@ -23,14 +23,14 @@ export async function GET() {
   if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const spreadsheetId = await getOrCreateSpreadsheet(accessToken);
-  const [issuer, clients, notesTemplates, bankAccounts] = await Promise.all([
+  const [issuer, issuers, clients, notesTemplates] = await Promise.all([
     readIssuerInfo(accessToken, spreadsheetId),
+    readIssuers(accessToken, spreadsheetId),
     readClients(accessToken, spreadsheetId),
     readNotesTemplates(accessToken, spreadsheetId),
-    readBankAccounts(accessToken, spreadsheetId),
   ]);
 
-  return NextResponse.json({ issuer, clients, notesTemplates, bankAccounts });
+  return NextResponse.json({ issuer, issuers, clients, notesTemplates });
 }
 
 export async function POST(req: NextRequest) {
@@ -45,6 +45,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  if (action === 'saveIssuerNew') {
+    await appendIssuer(accessToken, spreadsheetId, data);
+    return NextResponse.json({ ok: true });
+  }
+
   if (action === 'saveClient') {
     await appendClient(accessToken, spreadsheetId, data);
     return NextResponse.json({ ok: true });
@@ -52,11 +57,6 @@ export async function POST(req: NextRequest) {
 
   if (action === 'saveNotesTemplate') {
     await writeNotesTemplate(accessToken, spreadsheetId, data.docType, data.notes);
-    return NextResponse.json({ ok: true });
-  }
-
-  if (action === 'saveBankAccounts') {
-    await writeBankAccounts(accessToken, spreadsheetId, data.accounts);
     return NextResponse.json({ ok: true });
   }
 
