@@ -225,11 +225,12 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'saveClient', data: clientData }),
       });
-      if (!res.ok) throw new Error();
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? '保存エラー');
       setSavedClients((prev) => [...prev, clientData]);
       setSheetMsg('取引先を保存しました');
-    } catch {
-      setSheetMsg('保存エラー');
+    } catch (e) {
+      setSheetMsg(e instanceof Error ? e.message : '保存エラー');
     } finally {
       setSavingClient(false);
     }
@@ -491,6 +492,7 @@ export default function Home() {
                     stampDataUrl={stampDataUrl}
                     stampSize={stampSize}
                     onDownload={handleDownload}
+                    isLoggedIn={isLoggedIn}
                   />
                 )}
 

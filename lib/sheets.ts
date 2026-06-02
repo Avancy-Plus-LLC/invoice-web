@@ -52,6 +52,12 @@ async function ensureSheets(accessToken: string, spreadsheetId: string) {
   });
 
   const updates: Array<{ range: string; values: string[][] }> = [];
+  if (missing.includes('発行者情報')) {
+    updates.push({ range: '発行者情報!A1:L1', values: [['発行者名','郵便番号','住所','電話番号','メールアドレス','インボイス登録番号','銀行名','支店名','口座種別','口座番号','口座名義','WebhookURL']] });
+  }
+  if (missing.includes('取引先リスト')) {
+    updates.push({ range: '取引先リスト!A1:G1', values: [['取引先名','郵便番号','住所','部署','担当者名','電話番号','メールアドレス']] });
+  }
   if (missing.includes('備考マスタ')) {
     updates.push({ range: '備考マスタ!A1:B1', values: [['書類種別', '備考']] });
     updates.push({ range: '備考マスタ!A2:B4', values: DEFAULT_NOTES_ROWS });
@@ -96,9 +102,9 @@ export async function getOrCreateSpreadsheet(accessToken: string): Promise<strin
 }
 
 export async function readIssuers(accessToken: string, spreadsheetId: string): Promise<SavedIssuer[]> {
-  const data = await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/発行者情報!A2:K`, accessToken);
+  const data = await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/発行者情報!A1:K`, accessToken);
   return ((data.values ?? []) as string[][])
-    .filter((row) => row[0])
+    .filter((row) => row[0] && row[0] !== '発行者名')
     .map((row) => ({
       issuerName: row[0] ?? '',
       issuerPostal: row[1] ?? '',
@@ -187,8 +193,10 @@ export async function writeIssuerInfo(accessToken: string, spreadsheetId: string
 }
 
 export async function readClients(accessToken: string, spreadsheetId: string) {
-  const data = await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/取引先リスト!A2:G`, accessToken);
-  return ((data.values ?? []) as string[][]).map((row) => ({
+  const data = await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/取引先リスト!A1:G`, accessToken);
+  return ((data.values ?? []) as string[][])
+    .filter((row) => row[0] && row[0] !== '取引先名')
+    .map((row) => ({
     clientName: row[0] ?? '',
     clientPostal: row[1] ?? '',
     clientAddress: row[2] ?? '',

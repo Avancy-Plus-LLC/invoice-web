@@ -100,7 +100,7 @@ function buildRawEmail(params: {
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || (session as any)?.error === 'RefreshAccessTokenError') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const accessToken = (session as any)?.accessToken as string | null;
     if (!accessToken) return NextResponse.json({ error: 'No access token' }, { status: 401 });

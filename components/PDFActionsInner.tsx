@@ -28,6 +28,7 @@ type Props = {
   onDownload?: () => void;
   clientEmail?: string;
   invoiceNumber?: string;
+  isLoggedIn?: boolean;
 };
 
 function getDocument(data: InvoiceData, template: TemplateId, docType: DocType, stampDataUrl: string | null, stampSize: number) {
@@ -53,7 +54,7 @@ const btnBase = 'w-full text-sm font-medium py-2.5 px-4 rounded-lg transition-co
 type DriveState = 'idle' | 'saving' | 'saved' | 'error';
 type EmailState = 'idle' | 'sending' | 'sent' | 'error';
 
-export default function PDFActionsInner({ data, template, docType, stampDataUrl, stampSize, onDownload, clientEmail, invoiceNumber }: Props) {
+export default function PDFActionsInner({ data, template, docType, stampDataUrl, stampSize, onDownload, clientEmail, invoiceNumber, isLoggedIn }: Props) {
   const doc = useMemo(
     () => getDocument(data, template, docType, stampDataUrl, stampSize),
     [data, template, docType, stampDataUrl, stampSize]
@@ -155,7 +156,7 @@ export default function PDFActionsInner({ data, template, docType, stampDataUrl,
               >
                 ↓ ダウンロード
               </a>
-              {driveState === 'saved' && driveUrl ? (
+              {isLoggedIn && (driveState === 'saved' && driveUrl ? (
                 <a
                   href={driveUrl}
                   target="_blank"
@@ -174,8 +175,8 @@ export default function PDFActionsInner({ data, template, docType, stampDataUrl,
                 >
                   {driveState === 'saving' ? '保存中...' : driveState === 'error' ? '⚠ 再試行' : '☁ Driveに保存'}
                 </button>
-              )}
-              {clientEmail && (
+              ))}
+              {isLoggedIn && clientEmail && (
                 emailState === 'sent' ? (
                   <span className="text-green-400 text-sm font-medium px-2">✓ 送信済み</span>
                 ) : (
