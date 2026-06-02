@@ -31,6 +31,8 @@ type Props = {
   onApplyNotesTemplate?: () => void;
   onSaveNotesTemplate?: () => void;
   savingNotesTemplate?: boolean;
+  onSaveItemTemplate?: () => void;
+  savingItemTemplate?: boolean;
 };
 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
@@ -128,10 +130,13 @@ export function InvoiceForm({
   onApplyNotesTemplate,
   onSaveNotesTemplate,
   savingNotesTemplate,
+  onSaveItemTemplate,
+  savingItemTemplate,
 }: Props) {
   const { register, control, formState: { errors }, watch } = form;
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
   const items = watch('items');
+  const clientName = watch('clientName');
 
   return (
     <div className="space-y-6">
@@ -281,7 +286,19 @@ export function InvoiceForm({
 
       {/* 明細 */}
       <section>
-        <h3 className="text-sm font-bold text-gray-800 border-b pb-1 mb-3">明細</h3>
+        <div className="flex items-center justify-between border-b pb-1 mb-3">
+          <h3 className="text-sm font-bold text-gray-800">明細</h3>
+          {isLoggedIn && clientName && onSaveItemTemplate && (
+            <button
+              type="button"
+              onClick={onSaveItemTemplate}
+              disabled={savingItemTemplate}
+              className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+            >
+              {savingItemTemplate ? '保存中...' : '品目を保存'}
+            </button>
+          )}
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>

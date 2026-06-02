@@ -1,9 +1,9 @@
-import type { SavedIssuer } from './types';
+import type { SavedIssuer, InvoiceItem } from './types';
 
 const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
 const DRIVE_BASE = 'https://www.googleapis.com/drive/v3';
 
-const REQUIRED_SHEETS = ['発行者情報', '取引先リスト', '備考マスタ', '振込先リスト'];
+const REQUIRED_SHEETS = ['発行者情報', '取引先リスト', '備考マスタ', '振込先リスト', '品目マスタ'];
 
 const DEFAULT_NOTES_ROWS = [
   ['請求書', 'いつもお世話になっております。\n大変恐れ入りますが振込手数料はご負担頂きますようお願いいたします。'],
@@ -65,6 +65,9 @@ async function ensureSheets(accessToken: string, spreadsheetId: string) {
   if (missing.includes('振込先リスト')) {
     updates.push({ range: '振込先リスト!A1:F1', values: [['ラベル', '銀行名', '支店名', '口座種別', '口座番号', '口座名義']] });
   }
+  if (missing.includes('品目マスタ')) {
+    updates.push({ range: '品目マスタ!A1:E1', values: [['取引先名', '品目・内容', '数量', '単位', '単価']] });
+  }
   if (updates.length > 0) await batchUpdateValues(accessToken, spreadsheetId, updates);
 }
 
@@ -96,6 +99,7 @@ export async function getOrCreateSpreadsheet(accessToken: string): Promise<strin
     { range: '備考マスタ!A1:B1', values: [['書類種別', '備考']] },
     { range: '備考マスタ!A2:B4', values: DEFAULT_NOTES_ROWS },
     { range: '振込先リスト!A1:F1', values: [['ラベル','銀行名','支店名','口座種別','口座番号','口座名義']] },
+    { range: '品目マスタ!A1:E1', values: [['取引先名','品目・内容','数量','単位','単価']] },
   ]);
 
   return id;
@@ -258,3 +262,43 @@ export async function writeNotesTemplate(accessToken: string, spreadsheetId: str
   }
 }
 
+export async function readItemTemplates(accessToken: string, spreadsheetId: string): Promise<Record<string, InvoiceItem[]>> {
+  const data = await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/品目マスタ!A2:E`, accessToken);
+  const result: Record<string, InvoiceItem[]> = {};
+  for (const row of (data.values ?? []) as string[][]) {
+    if (!row[0]) continue;
+    const clientName = row[0];
+    if (!result[clientName]) result[clientName] = [];
+    const qty = Number(row[2]) || 1;
+    const price = Number(row[4]) || 0;
+    result[clientName].push({
+      description: row[1] ?? '',
+      quantity: qty,
+      unit: row[3] ?? '式',
+      unitPrice: price,
+      amount: qty * price,
+    });
+  }
+  return result;
+}
+
+export async function writeItemTemplate(accessToken: string, spreadsheetId: string, clientName: string, items: InvoiceItem[]) {
+  const data = await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/品目マスタ!A2:E`, accessToken);
+  const existing = ((data.values ?? []) as string[][]).filter((row) => row[0] && row[0] !== clientName);
+  const newRows = [
+    ...existing,
+    ...items.map((item) => [clientName, item.description, String(item.quantity), item.unit, String(item.unitPrice)]),
+  ];
+
+  await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/品目マスタ!A2:E:clear`, accessToken, {
+    method: 'POST',
+    body: '{}',
+  });
+
+  if (newRows.length > 0) {
+    await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/品目マスタ!A2:E?valueInputOption=RAW`, accessToken, {
+      method: 'PUT',
+      body: JSON.stringify({ values: newRows }),
+    });
+  }
+}

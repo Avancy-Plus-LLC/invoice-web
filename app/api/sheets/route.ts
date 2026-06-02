@@ -11,6 +11,8 @@ import {
   appendClient,
   readNotesTemplates,
   writeNotesTemplate,
+  readItemTemplates,
+  writeItemTemplate,
 } from '@/lib/sheets';
 
 async function getAccessToken(): Promise<string | null> {
@@ -24,14 +26,15 @@ export async function GET() {
   if (!accessToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const spreadsheetId = await getOrCreateSpreadsheet(accessToken);
-  const [issuer, issuers, clients, notesTemplates] = await Promise.all([
+  const [issuer, issuers, clients, notesTemplates, itemTemplates] = await Promise.all([
     readIssuerInfo(accessToken, spreadsheetId),
     readIssuers(accessToken, spreadsheetId),
     readClients(accessToken, spreadsheetId),
     readNotesTemplates(accessToken, spreadsheetId),
+    readItemTemplates(accessToken, spreadsheetId),
   ]);
 
-  return NextResponse.json({ issuer, issuers, clients, notesTemplates });
+  return NextResponse.json({ issuer, issuers, clients, notesTemplates, itemTemplates });
 }
 
 export async function POST(req: NextRequest) {
@@ -59,6 +62,11 @@ export async function POST(req: NextRequest) {
 
     if (action === 'saveNotesTemplate') {
       await writeNotesTemplate(accessToken, spreadsheetId, data.docType, data.notes);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === 'saveItemTemplate') {
+      await writeItemTemplate(accessToken, spreadsheetId, data.clientName, data.items);
       return NextResponse.json({ ok: true });
     }
 

@@ -7,7 +7,7 @@ import { InvoiceForm } from '@/components/InvoiceForm';
 import { TemplateSelector } from '@/components/TemplateSelector';
 import { InvoiceSummary } from '@/components/InvoiceSummary';
 import { PDFActions } from '@/components/PDFActions';
-import type { InvoiceData, TemplateId, DocType, SavedIssuer } from '@/lib/types';
+import type { InvoiceData, InvoiceItem, TemplateId, DocType, SavedIssuer } from '@/lib/types';
 import { computeTotals } from '@/lib/calculations';
 
 const today = new Date().toISOString().slice(0, 10);
@@ -85,6 +85,7 @@ export default function Home() {
   const [savedIssuers, setSavedIssuers] = useState<SavedIssuer[]>([]);
   const [savedClients, setSavedClients] = useState<SavedClient[]>([]);
   const [notesTemplates, setNotesTemplates] = useState<Record<string, string>>(DEFAULT_NOTES);
+  const [itemTemplates, setItemTemplates] = useState<Record<string, InvoiceItem[]>>({});
   const [webhookUrl, setWebhookUrl] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('');
   const [sheetMsg, setSheetMsg] = useState('');
@@ -92,6 +93,7 @@ export default function Home() {
   const [savingIssuerNew, setSavingIssuerNew] = useState(false);
   const [savingClient, setSavingClient] = useState(false);
   const [savingNotesTemplate, setSavingNotesTemplate] = useState(false);
+  const [savingItemTemplate, setSavingItemTemplate] = useState(false);
 
   const form = useForm<InvoiceData>({ defaultValues: DEFAULT_VALUES, mode: 'onChange' });
   const data = form.watch();
@@ -112,6 +114,7 @@ export default function Home() {
       if (json.notesTemplates && Object.keys(json.notesTemplates).length > 0) {
         setNotesTemplates((prev) => ({ ...prev, ...json.notesTemplates }));
       }
+      if (json.itemTemplates) setItemTemplates(json.itemTemplates);
       setSheetMsg('');
     } catch {
       setSheetMsg('読み込みエラー');
@@ -260,6 +263,30 @@ export default function Home() {
     }
   };
 
+  const saveItemTemplate = async () => {
+    setSavingItemTemplate(true);
+    setSheetMsg('');
+    try {
+      const vals = form.getValues();
+      const clientName = vals.clientName;
+      if (!clientName) throw new Error('取引先名を入力してください');
+      const res = await fetch('/api/sheets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'saveItemTemplate', data: { clientName, items: vals.items } }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? '保存エラー');
+      setItemTemplates((prev) => ({ ...prev, [clientName]: vals.items }));
+      setSheetMsg('品目を保存しました');
+      setTimeout(() => setSheetMsg(''), 2000);
+    } catch (e) {
+      setSheetMsg(e instanceof Error ? e.message : '保存エラー');
+    } finally {
+      setSavingItemTemplate(false);
+    }
+  };
+
   const selectClient = (client: SavedClient) => {
     form.setValue('clientName', client.clientName);
     form.setValue('clientPostal', client.clientPostal);
@@ -268,6 +295,8 @@ export default function Home() {
     form.setValue('clientContact', client.clientContact);
     form.setValue('clientTel', client.clientTel ?? '');
     form.setValue('clientEmail', client.clientEmail ?? '');
+    const savedItems = itemTemplates[client.clientName];
+    if (savedItems && savedItems.length > 0) form.setValue('items', savedItems);
   };
 
   const onSubmit = (e: React.FormEvent) => {
@@ -389,6 +418,8 @@ export default function Home() {
                 onApplyNotesTemplate={applyNotesTemplate}
                 onSaveNotesTemplate={saveNotesTemplate}
                 savingNotesTemplate={savingNotesTemplate}
+                onSaveItemTemplate={saveItemTemplate}
+                savingItemTemplate={savingItemTemplate}
               />
             </div>
 
