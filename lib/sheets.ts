@@ -53,7 +53,7 @@ async function ensureSheets(accessToken: string, spreadsheetId: string) {
 
   const updates: Array<{ range: string; values: string[][] }> = [];
   if (missing.includes('発行者情報')) {
-    updates.push({ range: '発行者情報!A1:L1', values: [['発行者名','郵便番号','住所','電話番号','メールアドレス','インボイス登録番号','銀行名','支店名','口座種別','口座番号','口座名義','WebhookURL']] });
+    updates.push({ range: '発行者情報!A1:O1', values: [['発行者名','郵便番号','住所','電話番号','メールアドレス','インボイス登録番号','銀行名','支店名','口座種別','口座番号','口座名義','WebhookURL','最終請求書番号','最終見積書番号','最終領収書番号']] });
   }
   if (missing.includes('取引先リスト')) {
     updates.push({ range: '取引先リスト!A1:G1', values: [['取引先名','郵便番号','住所','部署','担当者名','電話番号','メールアドレス']] });
@@ -94,7 +94,7 @@ export async function getOrCreateSpreadsheet(accessToken: string): Promise<strin
   const id = created.spreadsheetId as string;
 
   await batchUpdateValues(accessToken, id, [
-    { range: '発行者情報!A1:L1', values: [['発行者名','郵便番号','住所','電話番号','メールアドレス','インボイス登録番号','銀行名','支店名','口座種別','口座番号','口座名義','WebhookURL']] },
+    { range: '発行者情報!A1:O1', values: [['発行者名','郵便番号','住所','電話番号','メールアドレス','インボイス登録番号','銀行名','支店名','口座種別','口座番号','口座名義','WebhookURL','最終請求書番号','最終見積書番号','最終領収書番号']] },
     { range: '取引先リスト!A1:G1', values: [['取引先名','郵便番号','住所','部署','担当者名','電話番号','メールアドレス']] },
     { range: '備考マスタ!A1:B1', values: [['書類種別', '備考']] },
     { range: '備考マスタ!A2:B4', values: DEFAULT_NOTES_ROWS },
@@ -151,7 +151,7 @@ export async function appendIssuer(accessToken: string, spreadsheetId: string, i
 }
 
 export async function readIssuerInfo(accessToken: string, spreadsheetId: string) {
-  const data = await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/発行者情報!A2:L2`, accessToken);
+  const data = await gFetch(`${SHEETS_BASE}/${spreadsheetId}/values/発行者情報!A2:O2`, accessToken);
   const row: string[] = data.values?.[0] ?? [];
   if (!row.length) return null;
   return {
@@ -167,6 +167,9 @@ export async function readIssuerInfo(accessToken: string, spreadsheetId: string)
     accountNumber: row[9] ?? '',
     accountHolder: row[10] ?? '',
     webhookUrl: row[11] ?? '',
+    lastInvoiceNumber: row[12] ?? '',
+    lastEstimateNumber: row[13] ?? '',
+    lastReceiptNumber: row[14] ?? '',
   };
 }
 
@@ -260,6 +263,21 @@ export async function writeNotesTemplate(accessToken: string, spreadsheetId: str
       { method: 'POST', body: JSON.stringify({ values: [[docType, notes]] }) }
     );
   }
+}
+
+export async function writeInvoiceNumbers(
+  accessToken: string,
+  spreadsheetId: string,
+  numbers: { '請求書': string; '見積書': string; '領収書': string }
+) {
+  await gFetch(
+    `${SHEETS_BASE}/${spreadsheetId}/values/発行者情報!M2:O2?valueInputOption=RAW`,
+    accessToken,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ values: [[numbers['請求書'], numbers['見積書'], numbers['領収書']]] }),
+    }
+  );
 }
 
 export async function readItemTemplates(accessToken: string, spreadsheetId: string): Promise<Record<string, InvoiceItem[]>> {

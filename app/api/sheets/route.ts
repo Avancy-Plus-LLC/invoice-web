@@ -13,6 +13,7 @@ import {
   writeNotesTemplate,
   readItemTemplates,
   writeItemTemplate,
+  writeInvoiceNumbers,
 } from '@/lib/sheets';
 
 async function getAccessToken(): Promise<string | null> {
@@ -67,6 +68,11 @@ export async function POST(req: NextRequest) {
 
     if (action === 'saveItemTemplate') {
       await writeItemTemplate(accessToken, spreadsheetId, data.clientName, data.items);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === 'saveInvoiceNumbers') {
+      await writeInvoiceNumbers(accessToken, spreadsheetId, data);
       return NextResponse.json({ ok: true });
     }
 

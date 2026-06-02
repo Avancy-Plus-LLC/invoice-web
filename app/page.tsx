@@ -86,6 +86,7 @@ export default function Home() {
   const [savedClients, setSavedClients] = useState<SavedClient[]>([]);
   const [notesTemplates, setNotesTemplates] = useState<Record<string, string>>(DEFAULT_NOTES);
   const [itemTemplates, setItemTemplates] = useState<Record<string, InvoiceItem[]>>({});
+  const [savedNumbers, setSavedNumbers] = useState<Record<DocType, string>>({ '請求書': '', '見積書': '', '領収書': '' });
   const [webhookUrl, setWebhookUrl] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('');
   const [sheetMsg, setSheetMsg] = useState('');
@@ -108,6 +109,14 @@ export default function Home() {
         const fields = ['issuerName','issuerPostal','issuerAddress','issuerTel','issuerEmail','issuerInvoiceNumber','bankName','bankBranch','accountType','accountNumber','accountHolder'] as const;
         fields.forEach((f) => form.setValue(f, json.issuer[f] ?? ''));
         if (json.issuer.webhookUrl) setWebhookUrl(json.issuer.webhookUrl);
+        const nums: Record<DocType, string> = {
+          '請求書': json.issuer.lastInvoiceNumber || `INV-${new Date().getFullYear()}-0001`,
+          '見積書': json.issuer.lastEstimateNumber || `QT-${new Date().getFullYear()}-0001`,
+          '領収書': json.issuer.lastReceiptNumber || `RCPT-${new Date().getFullYear()}-0001`,
+        };
+        setSavedNumbers(nums);
+        // docType is '請求書' at initial auth — set the stored number directly
+        form.setValue('invoiceNumber', nums['請求書']);
       }
       setSavedIssuers(json.issuers ?? []);
       setSavedClients(json.clients ?? []);
@@ -312,7 +321,17 @@ export default function Home() {
     const match = current.match(/^(.*?)(\d+)$/);
     if (match) {
       const [, prefix, num] = match;
-      form.setValue('invoiceNumber', prefix + String(Number(num) + 1).padStart(num.length, '0'));
+      const next = prefix + String(Number(num) + 1).padStart(num.length, '0');
+      form.setValue('invoiceNumber', next);
+      setSavedNumbers((prev) => {
+        const updated = { ...prev, [docType]: next } as Record<DocType, string>;
+        fetch('/api/sheets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'saveInvoiceNumbers', data: updated }),
+        }).catch(() => {});
+        return updated;
+      });
     }
     if (webhookUrl) {
       const { total } = computeTotals(vals);
@@ -328,7 +347,7 @@ export default function Home() {
         }),
       }).catch(() => {});
     }
-  }, [form, webhookUrl, webhookSecret]);
+  }, [form, webhookUrl, webhookSecret, docType]);
 
   function handleStampUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -436,7 +455,7 @@ export default function Home() {
                         setDocType(t);
                         setPdfData(null);
                         const vals = form.getValues();
-                        form.setValue('invoiceNumber', switchDocPrefix(vals.invoiceNumber, t));
+                        form.setValue('invoiceNumber', savedNumbers[t] || switchDocPrefix(vals.invoiceNumber, t));
                         // いずれかのマスタと一致する場合のみ自動切替（カスタム入力は維持）
                         const allMasterNotes = Object.values(notesTemplates);
                         const isDefault = allMasterNotes.includes(vals.notes) || Object.values(DEFAULT_NOTES).includes(vals.notes);
