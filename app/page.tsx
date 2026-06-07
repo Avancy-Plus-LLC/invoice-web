@@ -87,7 +87,7 @@ export default function Home() {
   const [notesTemplates, setNotesTemplates] = useState<Record<string, string>>(DEFAULT_NOTES);
   const [itemTemplates, setItemTemplates] = useState<Record<string, InvoiceItem[]>>({});
   const [savedNumbers, setSavedNumbers] = useState<Record<DocType, string>>({ '請求書': '', '見積書': '', '領収書': '' });
-  const [webhookUrl, setWebhookUrl] = useState('');
+  const [webhookUrl, setWebhookUrl] = useState(() => typeof window !== "undefined" ? localStorage.getItem("ay_webhook_url") ?? "" : "");
   const [webhookSecret, setWebhookSecret] = useState(() => typeof window !== "undefined" ? localStorage.getItem("ay_webhook_secret") ?? "" : "");
   const [sheetMsg, setSheetMsg] = useState('');
   const [savingIssuer, setSavingIssuer] = useState(false);
@@ -108,7 +108,7 @@ export default function Home() {
       if (json.issuer) {
         const fields = ['issuerName','issuerPostal','issuerAddress','issuerTel','issuerEmail','issuerInvoiceNumber','bankName','bankBranch','accountType','accountNumber','accountHolder'] as const;
         fields.forEach((f) => form.setValue(f, json.issuer[f] ?? ''));
-        if (json.issuer.webhookUrl) setWebhookUrl(json.issuer.webhookUrl);
+        if (json.issuer.webhookUrl) { setWebhookUrl(json.issuer.webhookUrl); localStorage.setItem("ay_webhook_url", json.issuer.webhookUrl); }
         const nums: Record<DocType, string> = {
           '請求書': json.issuer.lastInvoiceNumber || `INV-${new Date().getFullYear()}-0001`,
           '見積書': json.issuer.lastEstimateNumber || `QT-${new Date().getFullYear()}-0001`,
@@ -563,7 +563,7 @@ export default function Home() {
                   <input
                     type="url"
                     value={webhookUrl}
-                    onChange={(e) => setWebhookUrl(e.target.value)}
+                    onChange={(e) => { setWebhookUrl(e.target.value); localStorage.setItem("ay_webhook_url", e.target.value); }}
                     placeholder="https://script.google.com/..."
                     className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
                   />
