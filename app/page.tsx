@@ -335,15 +335,18 @@ export default function Home() {
     }
     if (webhookUrl) {
       const { total } = computeTotals(vals);
-      fetch('/api/webhook', {
+      fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          invoiceDate: vals.issueDate.replace(/-/g, '/'),
-          invoiceNo: vals.invoiceNumber,
-          clientName: vals.clientName,
-          total,
+          action: 'registerInvoice',
           secret: webhookSecret,
+          data: {
+            invoiceDate: vals.issueDate.replace(/-/g, '/'),
+            invoiceNo: vals.invoiceNumber,
+            clientName: vals.clientName,
+            total,
+          },
         }),
       }).catch(() => {});
     }
