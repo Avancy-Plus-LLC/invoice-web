@@ -88,7 +88,7 @@ export default function Home() {
   const [itemTemplates, setItemTemplates] = useState<Record<string, InvoiceItem[]>>({});
   const [savedNumbers, setSavedNumbers] = useState<Record<DocType, string>>({ '請求書': '', '見積書': '', '領収書': '' });
   const [webhookUrl, setWebhookUrl] = useState('');
-  const [webhookSecret, setWebhookSecret] = useState('');
+  const [webhookSecret, setWebhookSecret] = useState(() => typeof window !== "undefined" ? localStorage.getItem("ay_webhook_secret") ?? "" : "");
   const [sheetMsg, setSheetMsg] = useState('');
   const [savingIssuer, setSavingIssuer] = useState(false);
   const [savingIssuerNew, setSavingIssuerNew] = useState(false);
@@ -567,7 +567,7 @@ export default function Home() {
                   <input
                     type="password"
                     value={webhookSecret}
-                    onChange={(e) => setWebhookSecret(e.target.value)}
+                    onChange={(e) => { setWebhookSecret(e.target.value); localStorage.setItem("ay_webhook_secret", e.target.value); }}
                     placeholder="シークレットキー（任意）"
                     className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
                   />
