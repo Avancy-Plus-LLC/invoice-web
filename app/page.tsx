@@ -333,14 +333,16 @@ export default function Home() {
         return updated;
       });
     }
-    if (webhookUrl) {
+    const _webhookUrl = webhookUrl || localStorage.getItem('ay_webhook_url') || '';
+    const _webhookSecret = webhookSecret || localStorage.getItem('ay_webhook_secret') || '';
+    if (_webhookUrl) {
       const { total } = computeTotals(vals);
-      fetch(webhookUrl, {
+      fetch(_webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'registerInvoice',
-          secret: webhookSecret,
+          secret: _webhookSecret,
           data: {
             invoiceDate: vals.issueDate.replace(/-/g, '/'),
             invoiceNo: vals.invoiceNumber,
