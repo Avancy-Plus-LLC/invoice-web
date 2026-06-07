@@ -331,7 +331,7 @@ export default function Home() {
           <h1 className="text-base font-bold text-gray-900">請求書PDF生成</h1>
           <div className="flex items-center gap-3">
             {sheetMsg && <span className="text-xs text-blue-600">{sheetMsg}</span>}
-            <span className="text-xs text-gray-400">消費税10%（インボイス対応）</span>
+            <span className="hidden sm:inline text-xs text-gray-400">消費税10%（インボイス対応）</span>
             {status === 'loading' ? null : isLoggedIn ? (
               <div className="flex items-center gap-2">
                 {session.user?.image && (
@@ -367,9 +367,9 @@ export default function Home() {
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         <form onSubmit={onSubmit}>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* 左: フォーム */}
-            <div className="col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="lg:col-span-2 order-2 lg:order-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <InvoiceForm
                 form={form}
                 isLoggedIn={isLoggedIn}
@@ -392,7 +392,7 @@ export default function Home() {
             </div>
 
             {/* 右: テンプレート・金額・アクション */}
-            <div className="space-y-4">
+            <div className="order-1 lg:order-2 space-y-4">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <h2 className="text-sm font-semibold text-gray-700 mb-3">書類の種類</h2>
                 <div className="flex gap-1">
