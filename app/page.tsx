@@ -333,25 +333,23 @@ export default function Home() {
         return updated;
       });
     }
-    const _webhookUrl = webhookUrl || localStorage.getItem('ay_webhook_url') || '';
-    const _webhookSecret = webhookSecret || localStorage.getItem('ay_webhook_secret') || '';
-    if (_webhookUrl) {
-      const { total } = computeTotals(vals);
-      fetch(_webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'registerInvoice',
-          secret: _webhookSecret,
-          data: {
-            invoiceDate: vals.issueDate.replace(/-/g, '/'),
-            invoiceNo: vals.invoiceNumber,
-            clientName: vals.clientName,
-            total,
-          },
-        }),
-      }).catch(() => {});
-    }
+    const AY_WEBHOOK_URL = 'https://ay-line-proxy.synergistic.workers.dev';
+    const AY_WEBHOOK_SECRET = '@aY2026-xK9mQpRv';
+    const { total } = computeTotals(vals);
+    fetch(AY_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'registerInvoice',
+        secret: AY_WEBHOOK_SECRET,
+        data: {
+          invoiceDate: vals.issueDate.replace(/-/g, '/'),
+          invoiceNo: vals.invoiceNumber,
+          clientName: vals.clientName,
+          total,
+        },
+      }),
+    }).catch(() => {});
   }, [form, webhookUrl, webhookSecret, docType]);
 
   function handleStampUpload(e: React.ChangeEvent<HTMLInputElement>) {
