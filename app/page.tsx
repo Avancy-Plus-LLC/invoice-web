@@ -47,6 +47,7 @@ const DEFAULT_VALUES: InvoiceData = {
   issuerInvoiceNumber: '',
   items: [{ description: '', quantity: 1, unit: '式', unitPrice: 0, amount: 0 }],
   notes: DEFAULT_NOTES['請求書'],
+  taxType: 'exclusive',
   bankName: '',
   bankBranch: '',
   accountType: '普通',
@@ -479,7 +480,21 @@ export default function Home() {
               )}
 
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <h2 className="text-sm font-semibold text-gray-700 mb-3">金額</h2>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold text-gray-700">金額</h2>
+                  <div className="flex gap-1">
+                    {([['exclusive', '外税'], ['inclusive', '内税'], ['exempt', '消費税相当額']] as const).map(([val, label]) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => form.setValue('taxType', val)}
+                        className={`text-xs px-2 py-0.5 rounded border transition-colors ${data.taxType === val ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <InvoiceSummary data={data} />
               </div>
 

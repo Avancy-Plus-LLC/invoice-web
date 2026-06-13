@@ -28,6 +28,7 @@ export type InvoiceData = {
   issuerInvoiceNumber: string;
   items: InvoiceItem[];
   notes: string;
+  taxType: 'exclusive' | 'inclusive' | 'exempt';
   bankName: string;
   bankBranch: string;
   accountType: string;

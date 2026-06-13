@@ -1,6 +1,6 @@
 import { Document, Image, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import type { InvoiceData } from '@/lib/types';
-import { computeTotals, formatCurrency, formatDateJa, formatPostal } from '@/lib/calculations';
+import { computeTotals, formatCurrency, formatDateJa, formatPostal, taxLabel, subtotalLabel } from '@/lib/calculations';
 import { registerFonts } from '@/lib/fonts';
 
 registerFonts();
@@ -75,11 +75,11 @@ export function ReceiptTemplate({ data, stampDataUrl, stampSize = 64 }: Props) {
 
         <View style={s.breakdownBox}>
           <View style={s.breakdownRow}>
-            <Text style={s.breakdownLabel}>小計</Text>
+            <Text style={s.breakdownLabel}>{subtotalLabel(data.taxType)}</Text>
             <Text style={s.breakdownValue}>¥{formatCurrency(subtotal)}</Text>
           </View>
           <View style={s.breakdownRow}>
-            <Text style={s.breakdownLabel}>内消費税（10%）</Text>
+            <Text style={s.breakdownLabel}>{taxLabel(data.taxType)}</Text>
             <Text style={s.breakdownValue}>¥{formatCurrency(taxAmount)}</Text>
           </View>
           <View style={{ ...s.breakdownRow, borderBottom: 'none' }}>
