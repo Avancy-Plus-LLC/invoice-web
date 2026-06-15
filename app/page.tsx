@@ -387,18 +387,18 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-base font-bold text-gray-900">請求書PDF生成</h1>
           <div className="flex items-center gap-3">
-            {sheetMsg && <span className="text-xs text-blue-600">{sheetMsg}</span>}
-            <span className="text-xs text-gray-400">消費税10%（インボイス対応）</span>
+            {sheetMsg && <span className="text-sm text-blue-600">{sheetMsg}</span>}
+            <span className="hidden sm:inline text-sm text-gray-400">消費税10%（インボイス対応）</span>
             {status === 'loading' ? null : isLoggedIn ? (
               <div className="flex items-center gap-2">
                 {session.user?.image && (
                   <img src={session.user.image} alt="" className="w-7 h-7 rounded-full" />
                 )}
-                <span className="text-xs text-gray-600 hidden sm:block">{session.user?.name}</span>
+                <span className="text-sm text-gray-600 hidden sm:block">{session.user?.name}</span>
                 <button
                   type="button"
                   onClick={() => signOut()}
-                  className="text-xs text-gray-500 hover:text-gray-700 border border-gray-300 rounded px-2 py-1"
+                  className="text-sm text-gray-500 hover:text-gray-700 border border-gray-300 rounded px-2 py-1"
                 >
                   ログアウト
                 </button>
@@ -407,7 +407,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => signIn('google')}
-                className="text-xs bg-white border border-gray-300 rounded px-3 py-1.5 text-gray-700 hover:bg-gray-50 flex items-center gap-1.5"
+                className="text-sm bg-white border border-gray-300 rounded px-3 py-1.5 text-gray-700 hover:bg-gray-50 flex items-center gap-1.5"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -424,9 +424,9 @@ export default function Home() {
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         <form onSubmit={onSubmit}>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* 左: フォーム */}
-            <div className="col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="lg:col-span-2 order-2 lg:order-1 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <InvoiceForm
                 form={form}
                 isLoggedIn={isLoggedIn}
@@ -452,9 +452,9 @@ export default function Home() {
             </div>
 
             {/* 右: テンプレート・金額・アクション */}
-            <div className="space-y-4">
+            <div className="order-1 lg:order-2 space-y-4">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <h2 className="text-sm font-semibold text-gray-700 mb-3">書類の種類</h2>
+                <h2 className="text-base font-semibold text-gray-700 mb-3">書類の種類</h2>
                 <div className="flex gap-1">
                   {(['見積書', '請求書', '領収書'] as DocType[]).map((t) => (
                     <button
@@ -470,7 +470,7 @@ export default function Home() {
                         const isDefault = allMasterNotes.includes(vals.notes) || Object.values(DEFAULT_NOTES).includes(vals.notes);
                         if (isDefault) form.setValue('notes', notesTemplates[t] ?? DEFAULT_NOTES[t] ?? '');
                       }}
-                      className={`flex-1 text-xs font-medium py-1.5 rounded border transition-colors ${docType === t ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+                      className={`flex-1 text-sm font-medium py-1.5 rounded border transition-colors ${docType === t ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`}
                     >
                       {t}
                     </button>
@@ -486,7 +486,7 @@ export default function Home() {
 
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-semibold text-gray-700">金額</h2>
+                  <h2 className="text-base font-semibold text-gray-700">金額</h2>
                   <div className="flex gap-1">
                     {([['exclusive', '外税'], ['inclusive', '内税'], ['exempt', '消費税相当額']] as const).map(([val, label]) => (
                       <button
@@ -505,19 +505,19 @@ export default function Home() {
 
               {/* 電子印鑑 */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <h2 className="text-sm font-semibold text-gray-700 mb-3">電子印鑑</h2>
+                <h2 className="text-base font-semibold text-gray-700 mb-3">電子印鑑</h2>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     {stampDataUrl ? (
                       <img src={stampDataUrl} alt="印鑑" style={{ width: stampSize, height: stampSize, objectFit: 'contain' }} className="rounded border border-gray-200" />
                     ) : (
-                      <div className="w-16 h-16 rounded border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs">印鑑</div>
+                      <div className="w-16 h-16 rounded border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm">印鑑</div>
                     )}
                     <div className="flex-1 space-y-2">
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full text-xs border border-gray-300 rounded px-2 py-1.5 hover:bg-gray-50 text-gray-700"
+                        className="w-full text-sm border border-gray-300 rounded px-2 py-1.5 hover:bg-gray-50 text-gray-700"
                       >
                         {stampDataUrl ? '画像を変更' : '画像をアップロード'}
                       </button>
@@ -525,7 +525,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={handleStampRemove}
-                          className="w-full text-xs border border-red-200 rounded px-2 py-1.5 hover:bg-red-50 text-red-500"
+                          className="w-full text-sm border border-red-200 rounded px-2 py-1.5 hover:bg-red-50 text-red-500"
                         >
                           削除
                         </button>
@@ -534,7 +534,7 @@ export default function Home() {
                   </div>
                   {stampDataUrl && (
                     <div>
-                      <label className="text-xs text-gray-500 block mb-1">サイズ: {stampSize}pt</label>
+                      <label className="text-sm text-gray-500 block mb-1">サイズ: {stampSize}pt</label>
                       <input
                         type="range"
                         min={30}
@@ -553,7 +553,7 @@ export default function Home() {
                 <button
                   type="submit"
                   disabled={generating}
-                  className="w-full bg-gray-800 hover:bg-gray-900 disabled:bg-gray-500 disabled:cursor-not-allowed text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-gray-800 hover:bg-gray-900 disabled:bg-gray-500 disabled:cursor-not-allowed text-white text-base font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   {generating && <span className="animate-spin text-base">⟳</span>}
                   {generating ? 'PDF生成中...' : 'PDFを生成'}
@@ -574,7 +574,7 @@ export default function Home() {
                 )}
 
                 {!pdfData && (
-                  <p className="text-xs text-gray-400 text-center">
+                  <p className="text-sm text-gray-400 text-center">
                     「PDFを生成」後にプレビューできます
                   </p>
                 )}
@@ -582,27 +582,27 @@ export default function Home() {
 
               {isLoggedIn && (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-2">
-                  <h2 className="text-sm font-semibold text-gray-700">外部連携（Webhook）</h2>
-                  <p className="text-xs text-gray-400">ダウンロード時に請求データを外部システムへ送信します</p>
+                  <h2 className="text-base font-semibold text-gray-700">外部連携（Webhook）</h2>
+                  <p className="text-sm text-gray-400">ダウンロード時に請求データを外部システムへ送信します</p>
                   <input
                     type="url"
                     value={webhookUrl}
                     onChange={(e) => { setWebhookUrl(e.target.value); localStorage.setItem("ay_webhook_url", e.target.value); }}
                     placeholder="https://script.google.com/..."
-                    className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                    className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
                   />
                   <input
                     type="password"
                     value={webhookSecret}
                     onChange={(e) => { setWebhookSecret(e.target.value); localStorage.setItem("ay_webhook_secret", e.target.value); }}
                     placeholder="シークレットキー（任意）"
-                    className="w-full text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                    className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
                   />
                   <button
                     type="button"
                     onClick={saveIssuer}
                     disabled={savingIssuer}
-                    className="w-full text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 rounded transition-colors"
+                    className="w-full text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 py-1.5 rounded transition-colors"
                   >
                     {savingIssuer ? '保存中...' : 'Webhook設定を保存'}
                   </button>

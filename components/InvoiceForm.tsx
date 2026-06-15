@@ -39,14 +39,14 @@ type Props = {
 function Field({ label, error, children }: { label: React.ReactNode; error?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
       {children}
-      {error && <p className="text-xs text-red-500 mt-0.5">{error}</p>}
+      {error && <p className="text-sm text-red-500 mt-0.5">{error}</p>}
     </div>
   );
 }
 
-const inputCls = 'w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent';
+const inputCls = 'w-full rounded border border-gray-300 px-2 py-2 text-base text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent';
 
 type PostalTarget = {
   postalField: 'clientPostal' | 'issuerPostal';
@@ -104,12 +104,12 @@ function PostalInput({
           type="button"
           onClick={lookup}
           disabled={loading}
-          className="shrink-0 rounded border border-gray-300 bg-gray-50 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+          className="shrink-0 rounded border border-gray-300 bg-gray-50 px-2.5 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
         >
           {loading ? '...' : '検索'}
         </button>
       </div>
-      {msg && <p className="mt-0.5 text-xs text-red-500">{msg}</p>}
+      {msg && <p className="mt-0.5 text-sm text-red-500">{msg}</p>}
     </div>
   );
 }
@@ -162,7 +162,7 @@ export function InvoiceForm({
     <div className="space-y-6">
       {/* 基本情報 */}
       <section>
-        <h3 className="text-sm font-bold text-gray-800 border-b pb-1 mb-3">基本情報</h3>
+        <h3 className="text-base font-bold text-gray-800 border-b pb-1 mb-3">基本情報</h3>
         <div className="grid grid-cols-3 gap-3">
           <Field label="番号" error={errors.invoiceNumber?.message}>
             <input {...register('invoiceNumber', { required: '必須です' })} className={inputCls} placeholder="INV-2024-0001" />
@@ -201,13 +201,13 @@ export function InvoiceForm({
       {/* 取引先情報 */}
       <section>
         <div className="flex items-center justify-between border-b pb-1 mb-3">
-          <h3 className="text-sm font-bold text-gray-800">取引先情報</h3>
+          <h3 className="text-base font-bold text-gray-800">取引先情報</h3>
           {isLoggedIn && (
             <button
               type="button"
               onClick={onSaveClient}
               disabled={savingClient}
-              className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+              className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
             >
               {savingClient ? '保存中...' : '+ この取引先を保存'}
             </button>
@@ -215,7 +215,7 @@ export function InvoiceForm({
         </div>
         {isLoggedIn && savedClients.length > 0 && (
           <div className="mb-3">
-            <label className="block text-xs font-medium text-gray-600 mb-1">保存済み取引先から選択</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">保存済み取引先から選択</label>
             <select
               className={inputCls}
               onChange={(e) => {
@@ -260,14 +260,14 @@ export function InvoiceForm({
       {/* 発行者情報 */}
       <section>
         <div className="flex items-center justify-between border-b pb-1 mb-3">
-          <h3 className="text-sm font-bold text-gray-800">発行者情報</h3>
+          <h3 className="text-base font-bold text-gray-800">発行者情報</h3>
           {isLoggedIn && (
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={onSaveIssuerNew}
                 disabled={savingIssuerNew}
-                className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
               >
                 {savingIssuerNew ? '保存中...' : '+ この発行者を保存'}
               </button>
@@ -275,7 +275,7 @@ export function InvoiceForm({
                 type="button"
                 onClick={onSaveIssuer}
                 disabled={savingIssuer}
-                className="text-xs text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                className="text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
               >
                 {savingIssuer ? '保存中...' : '保存'}
               </button>
@@ -284,7 +284,7 @@ export function InvoiceForm({
         </div>
         {isLoggedIn && savedIssuers.length > 0 && (
           <div className="mb-3">
-            <label className="block text-xs font-medium text-gray-600 mb-1">保存済み発行者から選択</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">保存済み発行者から選択</label>
             <select
               className={inputCls}
               onChange={(e) => {
@@ -326,20 +326,20 @@ export function InvoiceForm({
       {/* 明細 */}
       <section>
         <div className="flex items-center justify-between border-b pb-1 mb-3">
-          <h3 className="text-sm font-bold text-gray-800">明細</h3>
+          <h3 className="text-base font-bold text-gray-800">明細</h3>
           {isLoggedIn && clientName && onSaveItemTemplate && (
             <button
               type="button"
               onClick={onSaveItemTemplate}
               disabled={savingItemTemplate}
-              className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+              className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
             >
               {savingItemTemplate ? '保存中...' : '品目を保存'}
             </button>
           )}
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-xs border-collapse">
+          <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-gray-100 text-gray-600">
                 <th className="text-left px-2 py-2 font-medium w-[38%]">品目・内容</th>
@@ -391,7 +391,7 @@ export function InvoiceForm({
         <button
           type="button"
           onClick={() => append({ description: '', quantity: 1, unit: '式', unitPrice: 0, amount: 0 })}
-          className="mt-2 text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+          className="mt-2 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
         >
           <span className="text-base leading-none">+</span> 明細を追加
         </button>
@@ -399,7 +399,7 @@ export function InvoiceForm({
 
       {/* 振込先 */}
       <section>
-        <h3 className="text-sm font-bold text-gray-800 border-b pb-1 mb-3">振込先</h3>
+        <h3 className="text-base font-bold text-gray-800 border-b pb-1 mb-3">振込先</h3>
 
         <div className="grid grid-cols-3 gap-3">
           <Field label="銀行名">
@@ -427,14 +427,14 @@ export function InvoiceForm({
       {/* 備考 */}
       <section>
         <div className="flex items-center justify-between border-b pb-1 mb-3">
-          <h3 className="text-sm font-bold text-gray-800">備考</h3>
+          <h3 className="text-base font-bold text-gray-800">備考</h3>
           {isLoggedIn && (
             <div className="flex gap-2">
               {onApplyNotesTemplate && notesTemplate !== undefined && (
                 <button
                   type="button"
                   onClick={onApplyNotesTemplate}
-                  className="text-xs text-gray-500 hover:text-gray-700 border border-gray-300 rounded px-2 py-0.5"
+                  className="text-sm text-gray-500 hover:text-gray-700 border border-gray-300 rounded px-2 py-0.5"
                 >
                   マスタを反映
                 </button>
@@ -444,7 +444,7 @@ export function InvoiceForm({
                   type="button"
                   onClick={onSaveNotesTemplate}
                   disabled={savingNotesTemplate}
-                  className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                  className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
                 >
                   {savingNotesTemplate ? '保存中...' : 'マスタを更新'}
                 </button>
