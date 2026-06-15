@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFieldArray, type UseFormReturn } from 'react-hook-form';
-import type { InvoiceData, SavedIssuer } from '@/lib/types';
+import type { InvoiceData, DocType, SavedIssuer } from '@/lib/types';
 
 type SavedClient = {
   clientName: string;
@@ -27,6 +27,7 @@ type Props = {
   savingClient?: boolean;
   onSaveIssuer?: () => void;
   savingIssuer?: boolean;
+  docType?: DocType;
   notesTemplate?: string;
   onApplyNotesTemplate?: () => void;
   onSaveNotesTemplate?: () => void;
@@ -35,7 +36,7 @@ type Props = {
   savingItemTemplate?: boolean;
 };
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({ label, error, children }: { label: React.ReactNode; error?: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
@@ -116,6 +117,7 @@ function PostalInput({
 export function InvoiceForm({
   form,
   isLoggedIn,
+  docType,
   savedIssuers = [],
   onSelectIssuer,
   onSaveIssuerNew,
@@ -133,10 +135,28 @@ export function InvoiceForm({
   onSaveItemTemplate,
   savingItemTemplate,
 }: Props) {
-  const { register, control, formState: { errors }, watch } = form;
+  const { register, control, formState: { errors }, watch, setValue } = form;
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
   const items = watch('items');
   const clientName = watch('clientName');
+  const [dateHandwritten, setDateHandwritten] = useState(false);
+
+  useEffect(() => {
+    if (docType !== '領収書' && dateHandwritten) {
+      setDateHandwritten(false);
+      setValue('issueDate', new Date().toISOString().slice(0, 10), { shouldValidate: true });
+    }
+  }, [docType, dateHandwritten, setValue]);
+
+  function toggleDateHandwritten() {
+    const next = !dateHandwritten;
+    setDateHandwritten(next);
+    if (next) {
+      setValue('issueDate', '', { shouldValidate: false });
+    } else {
+      setValue('issueDate', new Date().toISOString().slice(0, 10), { shouldValidate: true });
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -147,8 +167,27 @@ export function InvoiceForm({
           <Field label="番号" error={errors.invoiceNumber?.message}>
             <input {...register('invoiceNumber', { required: '必須です' })} className={inputCls} placeholder="INV-2024-0001" />
           </Field>
-          <Field label="発行日" error={errors.issueDate?.message}>
-            <input type="date" {...register('issueDate', { required: '必須です' })} className={inputCls} />
+          <Field label={
+            <span className="flex items-center gap-2">
+              発行日
+              {docType === '領収書' && (
+                <button
+                  type="button"
+                  onClick={toggleDateHandwritten}
+                  className={`text-xs px-1.5 py-0.5 rounded border transition-colors ${dateHandwritten ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-gray-100 text-gray-500 border-gray-300 hover:bg-gray-200'}`}
+                >
+                  {dateHandwritten ? '手書き' : '手書きにする'}
+                </button>
+              )}
+            </span>
+          } error={!dateHandwritten ? errors.issueDate?.message : undefined}>
+            {dateHandwritten ? (
+              <div className="w-full rounded border border-dashed border-amber-300 bg-amber-50 px-2 py-1.5 text-sm text-amber-600">
+                PDF上は空欄（手書き）
+              </div>
+            ) : (
+              <input type="date" {...register('issueDate', { required: '必須です' })} className={inputCls} />
+            )}
           </Field>
           <Field label="支払期限 / 有効期限">
             <input type="date" {...register('dueDate')} className={inputCls} />

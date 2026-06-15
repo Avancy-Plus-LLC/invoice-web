@@ -49,7 +49,9 @@ export function ReceiptTemplate({ data, stampDataUrl, stampSize = 64 }: Props) {
         <Text style={s.title}>領 収 書</Text>
 
         <View style={s.metaRow}>
-          <Text style={s.metaText}>発行日：{formatDateJa(data.issueDate)}　　No. {data.invoiceNumber}</Text>
+          <Text style={s.metaText}>
+            発行日：{data.issueDate ? formatDateJa(data.issueDate) : '　　　年　　月　　日'}　　No. {data.invoiceNumber}
+          </Text>
         </View>
 
         <View style={s.clientRow}>

@@ -1,7 +1,7 @@
 'use client';
 
 import { usePDF } from '@react-pdf/renderer';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import type { InvoiceData, TemplateId, DocType } from '@/lib/types';
 import { buildFileName } from '@/lib/calculations';
 import { ClassicTemplate } from './pdf-templates/ClassicTemplate';
@@ -26,6 +26,7 @@ type Props = {
   stampDataUrl: string | null;
   stampSize: number;
   onDownload?: () => void;
+  onReady?: () => void;
   clientEmail?: string;
   invoiceNumber?: string;
   isLoggedIn?: boolean;
@@ -54,16 +55,21 @@ const btnBase = 'w-full text-sm font-medium py-2.5 px-4 rounded-lg transition-co
 type DriveState = 'idle' | 'saving' | 'saved' | 'error';
 type EmailState = 'idle' | 'sending' | 'sent' | 'error';
 
-export default function PDFActionsInner({ data, template, docType, stampDataUrl, stampSize, onDownload, clientEmail, invoiceNumber, isLoggedIn }: Props) {
+export default function PDFActionsInner({ data, template, docType, stampDataUrl, stampSize, onDownload, onReady, clientEmail, invoiceNumber, isLoggedIn }: Props) {
   const doc = useMemo(
     () => getDocument(data, template, docType, stampDataUrl, stampSize),
     [data, template, docType, stampDataUrl, stampSize]
   );
   const [instance, updateInstance] = usePDF();
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
   useEffect(() => {
     const timer = setTimeout(() => updateInstance(doc), 300);
     return () => clearTimeout(timer);
   }, [doc]);
+  useEffect(() => {
+    if (instance.url) onReadyRef.current?.();
+  }, [instance.url]);
   const [showPreview, setShowPreview] = useState(false);
   const [driveState, setDriveState] = useState<DriveState>('idle');
   const [driveUrl, setDriveUrl] = useState<string | null>(null);

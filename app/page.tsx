@@ -72,6 +72,8 @@ export default function Home() {
   const [pdfData, setPdfData] = useState<InvoiceData | null>(null);
   const [pdfDocType, setPdfDocType] = useState<DocType>('請求書');
   const [pdfTemplate, setPdfTemplate] = useState<TemplateId>('classic');
+  const [pdfKey, setPdfKey] = useState(0);
+  const [generating, setGenerating] = useState(false);
   const [stampDataUrl, setStampDataUrl] = useState<string | null>(null);
   const [stampSize, setStampSize] = useState(45);
 
@@ -311,9 +313,11 @@ export default function Home() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setGenerating(true);
     setPdfData({ ...form.getValues() });
     setPdfDocType(docType);
     setPdfTemplate(template);
+    setPdfKey(k => k + 1);
   };
 
   const handleDownload = useCallback(() => {
@@ -426,6 +430,7 @@ export default function Home() {
               <InvoiceForm
                 form={form}
                 isLoggedIn={isLoggedIn}
+                docType={docType}
                 savedIssuers={savedIssuers}
                 onSelectIssuer={selectIssuer}
                 onSaveIssuerNew={saveIssuerNew}
@@ -547,13 +552,16 @@ export default function Home() {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
                 <button
                   type="submit"
-                  className="w-full bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-colors"
+                  disabled={generating}
+                  className="w-full bg-gray-800 hover:bg-gray-900 disabled:bg-gray-500 disabled:cursor-not-allowed text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
-                  PDFを生成
+                  {generating && <span className="animate-spin text-base">⟳</span>}
+                  {generating ? 'PDF生成中...' : 'PDFを生成'}
                 </button>
 
                 {pdfData && (
                   <PDFActions
+                    key={pdfKey}
                     data={pdfData}
                     template={pdfTemplate}
                     docType={pdfDocType}
@@ -561,6 +569,7 @@ export default function Home() {
                     stampSize={stampSize}
                     onDownload={handleDownload}
                     isLoggedIn={isLoggedIn}
+                    onReady={() => setGenerating(false)}
                   />
                 )}
 

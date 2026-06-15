@@ -24,9 +24,10 @@ type Props = {
   stampDataUrl: string | null;
   stampSize: number;
   onDownload?: () => void;
+  onReady?: () => void;
   isLoggedIn?: boolean;
 };
 
-export function PDFActions({ data, template, docType, stampDataUrl, stampSize, onDownload, isLoggedIn }: Props) {
-  return <PDFActionsInner data={data} template={template} docType={docType} stampDataUrl={stampDataUrl} stampSize={stampSize} onDownload={onDownload} clientEmail={data.clientEmail} invoiceNumber={data.invoiceNumber} isLoggedIn={isLoggedIn} />;
+export function PDFActions({ data, template, docType, stampDataUrl, stampSize, onDownload, onReady, isLoggedIn }: Props) {
+  return <PDFActionsInner data={data} template={template} docType={docType} stampDataUrl={stampDataUrl} stampSize={stampSize} onDownload={onDownload} onReady={onReady} clientEmail={data.clientEmail} invoiceNumber={data.invoiceNumber} isLoggedIn={isLoggedIn} />;
 }
