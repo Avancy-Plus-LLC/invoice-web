@@ -131,3 +131,15 @@ Cloudflare 本番環境では `NEXTAUTH_URL` は `wrangler.toml [vars]` に、�
 - 取引先削除・編集機能
 - PDF プレビューのパフォーマンス改善（大量明細時の再レンダリング）
 - マルチユーザー対応（現状は1アカウント＝1スプレッドシート前提）
+
+## デプロイ時のURL維持（絶対ルール）
+
+公開URLは顧客・ブックマーク・カスタムドメインに紐づくため、再デプロイで**絶対に変えない**。
+
+- Cloudflare Workers/Pages は **worker名/プロジェクト名を変えなければ** `wrangler deploy` でURL不変。
+  - この repo の名前は `invoice-web`（wrangler.toml の `name`）。**変更しない**。
+  - カスタムドメイン設定も維持する。
+- 迷ったら名前を変えず、既存プロジェクトを更新する方に倒す。
+
+> Mac mini / MacBook Air の両方から作業する repo。エージェント（MacBook専用）に依存せず
+> 各マシンでこのルールを守るため、CLAUDE.md に明記している。
