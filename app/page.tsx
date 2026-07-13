@@ -8,7 +8,6 @@ import { TemplateSelector } from '@/components/TemplateSelector';
 import { InvoiceSummary } from '@/components/InvoiceSummary';
 import { PDFActions } from '@/components/PDFActions';
 import type { InvoiceData, InvoiceItem, TemplateId, DocType, SavedIssuer } from '@/lib/types';
-import { computeTotals } from '@/lib/calculations';
 
 const today = new Date().toISOString().slice(0, 10);
 const due = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -338,23 +337,6 @@ export default function Home() {
         return updated;
       });
     }
-    const AY_WEBHOOK_URL = 'https://ay-line-proxy.synergistic.workers.dev';
-    const AY_WEBHOOK_SECRET = '@aY2026-xK9mQpRv';
-    const { total } = computeTotals(vals);
-    fetch(AY_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'registerInvoice',
-        secret: AY_WEBHOOK_SECRET,
-        data: {
-          invoiceDate: vals.issueDate.replace(/-/g, '/'),
-          invoiceNo: vals.invoiceNumber,
-          clientName: vals.clientName,
-          total,
-        },
-      }),
-    }).catch(() => {});
   }, [form, webhookUrl, webhookSecret, docType]);
 
   function handleStampUpload(e: React.ChangeEvent<HTMLInputElement>) {
